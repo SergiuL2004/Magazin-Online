@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Buyer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Magazin Online</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/buyer/dashboard">Dashboard</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link" th:text="'Bine ați venit, ' + ${currentUser.email} + '!'"></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Deconectare</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
+        <h1 class="mb-4">Panou de Control Cumpărător</h1>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Produse Disponibile</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(allProducts)}" class="alert alert-info">
+                            Nu există produse disponibile.
+                        </div>
+                        <div th:if="${not #lists.isEmpty(allProducts)}" class="row row-cols-1 row-cols-md-3 g-4">
+                            <div th:each="product : ${allProducts}" class="col">
+                                <div class="card h-100">
+                                    <!-- Image Carousel -->
+                                    <div id="carousel-product-images" th:id="'carousel-' + ${product.id}" class="carousel slide" data-bs-ride="carousel">
+                                        <div class="carousel-inner">
+                                            <!-- If product has images, display them -->
+                                            <div th:if="${not #lists.isEmpty(product.imageUrls)}" th:each="img, imgStat : ${product.imageUrls}" 
+                                                 th:class="${imgStat.first} ? 'carousel-item active' : 'carousel-item'">
+                                                <img th:src="${img}" class="d-block w-100" style="height: 200px; object-fit: cover;" alt="Product Image">
+                                            </div>
+                                            <!-- If product has no images, display placeholder -->
+                                            <div th:if="${#lists.isEmpty(product.imageUrls)}" class="carousel-item active">
+                                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                                    <span class="text-muted">No image available</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button th:if="${#lists.size(product.imageUrls) > 1}" class="carousel-control-prev" type="button" 
+                                                th:data-bs-target="'#carousel-' + ${product.id}" data-bs-slide="prev">
+                                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Previous</span>
+                                        </button>
+                                        <button th:if="${#lists.size(product.imageUrls) > 1}" class="carousel-control-next" type="button" 
+                                                th:data-bs-target="'#carousel-' + ${product.id}" data-bs-slide="next">
+                                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            <span class="visually-hidden">Next</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="card-body">
+                                        <h5 class="card-title" th:text="${product.name}"></h5>
+                                        <p class="card-text" th:text="${product.description}"></p>
+                                        <p class="card-text">
+                                            <strong>Preț:</strong> <span th:text="${#numbers.formatDecimal(product.price, 1, 2)} + ' RON'"></span>
+                                            <span th:if="${product.negotiable}" class="badge bg-info ms-2">Negociabil</span>
+                                        </p>
+                                        <p class="card-text"><small class="text-muted" th:text="'Vânzător: ' + ${product.sellerEmail}"></small></p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <div class="d-grid gap-2">
+                                            <a th:if="${!product.negotiable}" 
+                                               th:href="@{/buyer/buy-product/{id}(id=${product.id})}" 
+                                               class="btn btn-success"
+                                               onclick="return confirm('Sigur doriți să cumpărați acest produs?')">Cumpără</a>
+                                            <a th:if="${product.negotiable}" 
+                                               th:href="@{/buyer/make-offer/{id}(id=${product.id})}" 
+                                               class="btn btn-primary">Fă o ofertă</a>
+                                            <a href="#" class="btn btn-outline-secondary mt-2" 
+                                               th:data-seller-email="${product.sellerEmail}"
+                                               th:data-product-name="${product.name}"
+                                               onclick="contactSeller(this.getAttribute('data-seller-email'), this.getAttribute('data-product-name'))">
+                                               Contactează vânzătorul
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Ofertele Mele</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(myOffers)}" class="alert alert-info">
+                            Nu aveți oferte active.
+                        </div>
+                        <div th:if="${not #lists.isEmpty(myOffers)}" class="row">
+                            <div th:each="offer : ${myOffers}" class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div th:class="${offer.status.name() == 'APPROVED' ? 'card-header bg-success text-white' : (offer.status.name() == 'REJECTED' ? 'card-header bg-danger text-white' : 'card-header bg-warning')}">
+                                        <h5 th:text="${offer.status.name() == 'APPROVED' ? 'Ofertă Aprobată' : (offer.status.name() == 'REJECTED' ? 'Ofertă Respinsă' : 'Ofertă în Așteptare')}"></h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="card-text">
+                                            <strong>ID Produs:</strong> <span th:text="${offer.productId}"></span>
+                                        </p>
+                                        <p class="card-text">
+                                            <strong>Preț Oferit:</strong> <span th:text="${#numbers.formatDecimal(offer.offeredPrice, 1, 2)} + ' RON'"></span>
+                                        </p>
+
+                                        <!-- Notification for approved offers -->
+                                        <div th:if="${offer.status.name() == 'APPROVED'}" class="alert alert-success">
+                                            <p><strong>Felicitări!</strong> Oferta dvs. a fost aprobată.</p>
+                                            <div th:if="${!offer.courierDataEntered}">
+                                                <p>Vă rugăm să introduceți datele pentru curier pentru a finaliza comanda.</p>
+                                                <a th:href="@{/buyer/enter-courier-data/{id}(id=${offer.id})}" class="btn btn-primary">Introduceți datele pentru curier</a>
+                                            </div>
+                                            <div th:if="${offer.courierDataEntered}" class="mt-2">
+                                                <p><strong>Comanda este pe drum!</strong></p>
+                                                <p>Curier: <span th:text="${offer.courierName}"></span></p>
+                                                <p>Număr de urmărire: <span th:text="${offer.trackingNumber}"></span></p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Notification for rejected offers -->
+                                        <div th:if="${offer.status.name() == 'REJECTED'}" class="alert alert-danger">
+                                            <p><strong>Ne pare rău!</strong> Oferta dvs. a fost respinsă de vânzător.</p>
+                                            <p>Puteți încerca să faceți o nouă ofertă sau să contactați vânzătorul pentru mai multe detalii.</p>
+                                        </div>
+
+                                        <!-- Notification for pending offers -->
+                                        <div th:if="${offer.status.name() == 'PENDING'}" class="alert alert-warning">
+                                            <p><strong>Oferta dvs. este în așteptare.</strong> Vânzătorul va răspunde în curând.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Istoricul Cumpărăturilor Mele</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(myPurchases)}" class="alert alert-info">
+                            Nu aveți cumpărături.
+                        </div>
+                        <table th:if="${not #lists.isEmpty(myPurchases)}" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID Produs</th>
+                                    <th>Preț Plătit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="purchase : ${myPurchases}">
+                                    <td th:text="${purchase.productId}"></td>
+                                    <td th:text="${#numbers.formatDecimal(purchase.soldPrice, 1, 2)} + ' RON'"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-3">
+        <div class="container text-center">
+            <p>&copy; 2025 Magazin Online. Toate drepturile rezervate.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function contactSeller(email, productName) {
+            // Create mailto link with subject and body
+            const subject = encodeURIComponent('Întrebare despre produsul: ' + productName);
+            const body = encodeURIComponent('Bună ziua,\n\nAș dori mai multe informații despre produsul "' + productName + '".\n\nCu stimă,');
+            const mailtoLink = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+
+            // Open email client
+            window.location.href = mailtoLink;
+        }
+    </script>
+</body>
+</html>

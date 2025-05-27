@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Adaugă Produs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Magazin Online</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/seller/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/seller/add-product">Adaugă Produs</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <span class="nav-link" th:text="'Bine ați venit, ' + ${currentUser.email} + '!'"></span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Deconectare</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+        <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+
+        <h1 class="mb-4">Adaugă Produs Nou</h1>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-body">
+                        <form th:action="@{/seller/add-product}" method="post" th:object="${product}">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Nume Produs</label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Descriere</label>
+                                <textarea class="form-control" id="description" th:field="*{description}" rows="3" required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Preț</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="price" th:field="*{price}" step="0.01" min="0" required>
+                                    <span class="input-group-text">RON</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="negotiable" th:field="*{negotiable}">
+                                <label class="form-check-label" for="negotiable">Preț Negociabil</label>
+                            </div>
+
+                            <div class="mb-3" id="minPriceGroup">
+                                <label for="minPrice" class="form-label">Preț Minim (pentru produse negociabile)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="minPrice" th:field="*{minPrice}" step="0.01" min="0">
+                                    <span class="input-group-text">RON</span>
+                                </div>
+                                <div class="form-text">Prețul minim trebuie să fie mai mic decât prețul afișat.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Imagini Produs (2-3 imagini)</label>
+                                <div class="mb-2">
+                                    <label for="imageUrl1" class="form-label">Imagine 1</label>
+                                    <input type="text" class="form-control" id="imageUrl1" name="imageUrl1" placeholder="URL imagine 1" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label for="imageUrl2" class="form-label">Imagine 2</label>
+                                    <input type="text" class="form-control" id="imageUrl2" name="imageUrl2" placeholder="URL imagine 2">
+                                </div>
+                                <div class="mb-2">
+                                    <label for="imageUrl3" class="form-label">Imagine 3</label>
+                                    <input type="text" class="form-control" id="imageUrl3" name="imageUrl3" placeholder="URL imagine 3">
+                                </div>
+                                <div class="form-text">
+                                    Introduceți URL-urile imaginilor. Cel puțin o imagine este obligatorie. <br>
+                                    <strong>Ce URL-uri să folosiți:</strong>
+                                    <ul>
+                                        <li>URL-uri directe către imagini (care se termină cu .jpg, .png, .jpeg, etc.)</li>
+                                        <li>URL-uri de la servicii de găzduire de imagini (Imgur, Flickr, etc.)</li>
+                                        <li>URL-uri de la servicii de stocare în cloud (Google Drive, Dropbox, etc.) configurate pentru acces public</li>
+                                    </ul>
+                                    <strong>Exemple:</strong>
+                                    <ul>
+                                        <li>https://example.com/images/product.jpg</li>
+                                        <li>https://i.imgur.com/abcdefg.png</li>
+                                    </ul>
+                                    <strong>Notă:</strong> Asigurați-vă că imaginile sunt accesibile public și URL-urile sunt permanente.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="contactSeller" name="contactSeller" checked>
+                                    <label class="form-check-label" for="contactSeller">
+                                        Afișează buton de contactare vânzător
+                                    </label>
+                                </div>
+                                <div class="form-text">Permite cumpărătorilor să vă contacteze direct pentru acest produs.</div>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Adaugă Produs</button>
+                                <a href="/seller/dashboard" class="btn btn-secondary">Anulează</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-3">
+        <div class="container text-center">
+            <p>&copy; 2025 Magazin Online. Toate drepturile rezervate.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide min price field based on negotiable checkbox
+        document.addEventListener('DOMContentLoaded', function() {
+            const negotiableCheckbox = document.getElementById('negotiable');
+            const minPriceGroup = document.getElementById('minPriceGroup');
+            const minPriceInput = document.getElementById('minPrice');
+
+            function toggleMinPrice() {
+                if (negotiableCheckbox.checked) {
+                    minPriceGroup.style.display = 'block';
+                    minPriceInput.required = true;
+                } else {
+                    minPriceGroup.style.display = 'none';
+                    minPriceInput.required = false;
+                    minPriceInput.value = '0';
+                }
+            }
+
+            // Initial state
+            toggleMinPrice();
+
+            // On change
+            negotiableCheckbox.addEventListener('change', toggleMinPrice);
+        });
+    </script>
+</body>
+</html>
